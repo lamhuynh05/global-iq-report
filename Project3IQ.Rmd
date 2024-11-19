@@ -1,0 +1,285 @@
+---
+title: "Project 3: Global IQ"
+author: "540082847"
+date: "University of Sydney | DATA1001 | May 2024"
+# You can change the title, subtitle, author etc.
+# if you do not want a subtitle, author, or date just delete or comment # the the line!
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    self_contained: yes
+    theme: flatly
+    # Other themes can be found at: https://bootswatch.com/
+    css: 
+      - https://use.fontawesome.com/releases/v5.0.6/css/all.css
+    #This will allow you to insert icons in your document, thanks to [Font Awesome](http://fontawesome.io).
+    #You will find an examples below.
+    # If you are knitting your document but not connected to the internet, place a "#" in front of the css line above with the font-awesome.min.css line to comment it out. This will let you knit the document in draft form until you connect again and knit the final. Note that when you do this some elements will be missing from the knitted slides. 
+    toc: true
+    #This adds a Table of Contents (toc).
+    toc_depth: 3
+    #This controls the number of subheadings included in the toc.
+    toc_float: true
+    #This allows toc to update relative to your location as you scroll down the html page.
+    code_folding: hide
+    #code_folding can be changed to "hide"" if you want the all your code to be collapsed when you open the document
+    
+    # More information: http://rmarkdown.rstudio.com/html_document_format.html
+---
+
+# Client Bio 
+The United Nations (UN) is an international organisation that is committed to maintaining international peace and security, promoting social progress, and human rights (United Nations, 2017). The organisation actively promotes educational and economic development as key elements of its sustainable development goals. https://www.un.org/en
+
+# Recommendation
+- Statistical analysis reveals a robust correlation between educational attainment and economic prosperity, evidenced by higher Gross National Income (GNI) per capita with increased schooling years. 
+
+- This report recommends that the United Nations intensifies efforts to extend mean years of schooling globally, particularly in underperforming regions. Such a strategy not only aligns with the UN’s Sustainable Development Goal 4 and 8 (THE 17 GOALS | Sustainable Development, 2015) but also promises significant economic uplift.
+
+- Implementing this recommendation will advance global economic stability and reduce inequalities, reinforcing the UN's commitment to sustainable development.
+<br>
+
+# Evidence 
+
+## Initial Data Analysis (IDA)
+### Source:
+The dataset used is titled “Average global IQ per country with other stats”. It was collected and formatted by Matheus Felipe on Kaggle (https://www.kaggle.com/datasets/mlippo/average-global-iq-per-country-with-other-stats?resource=download)
+
+### Limitation:
+There are many rows with missing data in mean years of schooling and GNI which may lead to inaccurate and non-inclusive results. 
+
+### Structure:
+The dataset consists of 193 rows, each row represents a country or small territory. There are 10 columns of different variables:
+
+- Rank
+
+- Country
+
+- Average IQ
+
+- Continent
+
+- Literacy Rate
+
+- Nobel Prizes
+
+- HDI
+
+- Mean years of schooling: Mean years of education that a country’s citizens receive.
+
+- GNI: Gross National Income of that country. 
+
+- Population
+
+### Data Cleaning:
+Command read_csv classifies the columns when the dataset was imported. The column labels were changed from question format to short and precise names for convenience and reusability.
+```{r, warning = FALSE, message=FALSE}
+options(repos = c(CRAN = "https://cloud.r-project.org/"))
+data = read.csv("~/Desktop/DATA1001/avgIQpercountry.csv")
+colnames(data) = c(
+  "rank",
+  "country",
+  "averageiq",
+  "continent",
+  "literacyrate",
+  "nobelprizes",
+  "hdi",
+  "meanschoolyears",
+  "gni",
+  "population"
+)
+```
+
+### R's Summary of Data:
+```{r, warning = FALSE, message=FALSE}
+# Quick look at top 5 rows of data
+head(data)
+## Size of data
+dim(data)
+## R's classification of data
+class(data)
+## R's classification of variables
+str(data)
+```
+
+
+## Linear Regression Models
+According to Marquez-Ramos, education is important as it affects the country’s economic growth (Marquez-Ramos). From the IQ dataset, education is quantified as mean years of schooling and economic growth is measured by Gross National Income (GNI). 
+
+To clarify how mean years of schooling impacts economic outcomes in varied contexts, countries are divided into lower and higher GNI groups based on median GNI, reducing variability within groups and enabling more precise comparisons.
+```{r}
+median_gni <- median(data$gni, na.rm = TRUE)  
+
+lower_gni_group <- data[data$gni <= median_gni,]
+higher_gni_group <- data[data$gni > median_gni,]
+```
+
+In order to ensure that a relationship between education and economic growth exists and visualise such a relationship, scatter plots are used for both lower GNI and higher GNI groups.
+```{r,warning = FALSE, message=FALSE}
+library(tidyverse)
+ggplot(lower_gni_group, aes(x = meanschoolyears, y = gni)) +
+  geom_point() +
+  geom_smooth(method="lm", colour = "#1b95e0", se = FALSE) +
+  theme_classic() +
+  ggtitle("Relationship of Mean School Years and GNI of countries with lower GNI") +
+  xlab("Country's Mean Years of School") +
+  ylab("Country's Gross National Income (GNI)")
+
+library(tidyverse)
+ggplot(higher_gni_group, aes(x = meanschoolyears, y = gni)) +
+  geom_point() +
+  geom_smooth(method="lm", colour = "#1b95e0", se = FALSE) +
+  theme_classic() +
+  ggtitle("Relationship of Mean School Years and GNI of countries with higher GNI") +
+  xlab("Country's Mean Years of School") +
+  ylab("Country's Gross National Income (GNI)")
+```
+
+The two scatter plots demonstrate that as the countries' mean years of school increases, their GNI also increases, therefore, there is a positive relationship between the two variables. This is consistent with current research showing that as individuals receive more education, their income tends to increase (Clarke, 2022), which in turn aligns with the recommendation that higher education levels can lead to a greater country’s GNI. 
+
+After a visible relationship between mean years of school and GNI has formed, a linear model is used to quantitatively measure this relationship, providing precise estimates and enabling statistical testing for significance.
+```{r}
+low <- lm(gni ~ meanschoolyears, data = lower_gni_group)
+summary(low)
+
+high <- lm(gni ~ meanschoolyears, data = higher_gni_group)
+summary(high)
+```
+
+Both p-values from the linear regression models of the lower and higher GNI groups are below 0.05, indicating a statistically significant relationship between mean years of schooling and GNI in both economic tiers, confirming that education positively impacts economic performance across different levels of national income.
+
+## Bar Plot
+Creating a bar plot to compare mean of mean school years by GNI levels provides a clear, visual method for highlighting educational disparities between lower and higher GNI countries. 
+```{r}
+mean_school_years_low <- mean(lower_gni_group$meanschoolyears, na.rm = TRUE)
+mean_school_years_high <- mean(higher_gni_group$meanschoolyears, na.rm = TRUE)
+
+group_means <- data.frame(
+  gni_level = c("Low", "High"),
+  mean_education_level = c(mean_school_years_low, mean_school_years_high)
+)
+
+library(ggplot2)
+ggplot(group_means, aes(x = gni_level, y = mean_education_level, fill = gni_level)) +
+  geom_bar(stat = "identity", position = position_dodge(), show.legend = FALSE) +
+  scale_fill_manual(values = c("Low" = "darkblue", "High" = "darkgreen")) +
+  theme_minimal() +
+  labs(
+    title = "Comparison of Mean of Mean School Years by GNI Level",
+    x = "GNI Level",
+    y = "Mean School Years"
+  )
+```
+
+The bar plot shows that higher GNI countries tend to have more years of schooling. According to Vegas, wealthier nations invest more in education which suggests that increasing educational opportunities in lower GNI countries could be a key strategy for economic development (Vegas, 2020).
+
+## Hypothesis Testing
+H0 = There is no difference in the mean years of schooling between the lower GNI group and the higher GNI group.
+
+H1 = There is a difference in the mean years of schooling between the lower GNI group and the higher GNI group.
+
+A Welch Two Sample t-test is performed on the mean school years of lower GNI group and higher GNI group. As the p-value is smaller than 0.05, there is sufficient evidence to reject the null hypothesis. Therefore, there is a difference in mean years of schooling between the two groups of GNI. 
+```{r}
+t.test(lower_gni_group$meanschoolyears, higher_gni_group$meanschoolyears, var.equal = FALSE)
+```
+
+# Acknowledgments
+United Nations (2017). About Us | United Nations. United Nations. https://www.un.org/en/about-us
+
+THE 17 GOALS | Sustainable Development. (2015). Un.org. https://sdgs.un.org/goals
+
+Marquez-Ramos, L., & Mourelle, E. (2019). Education and economic growth: an empirical analysis of nonlinearities. Applied Economic Analysis, 27(79), 21–45. https://doi.org/10.1108/aea-06-2019-0005
+
+Clarke, M. (2022). Income - Department of Education, Australian Government. Department of Education. https://www.education.gov.au/integrated-data-research/benefits-educational-attainment/income
+
+Vegas, E. (2020, June 19). Investing in public education worldwide is now more important than ever. Brookings.
+https://www.brookings.edu/articles/investing-in-public-education-worldwide-is-now-more-important-than-ever/
+<br>
+
+# Appendix 
+
+## Client Choice
+United Nations is chosen as the client for this project's recommendation because of its global influence and commitment to promoting quality education. 
+
+## Statisitcal Analyses
+Independence: The samples are all independent as each country is only used once. 
+
+### Hypothesis
+This is done in section 3.4
+
+### Assumptions
+#### Linear Regression Models
+
+- Scatter plots: Linearity of scatter plots can be found in section 2.2. 
+
+- Residual plots: The points on both residual plots appear to randomly scatter around the horizontal axis which demonstrates homoscedastic. 
+
+Thus, the two assumptions are met for the linear regression models that are done in section 2.2.
+```{r, warning = FALSE, message = FALSE}
+library(ggplot2)
+model_low <- lm(gni ~ meanschoolyears, data = lower_gni_group)  
+residuals_df <- data.frame(
+    resid = resid(model_low),
+    fitted = fitted(model_low)
+)
+
+ggplot(residuals_df, aes(x = fitted, y = resid)) +
+    geom_point() +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "red") +  
+    labs(x = "Fitted Values", y = "Residuals", title = "Residual vs. Fitted Plot for Lower GNI group") +
+    theme_minimal()
+
+library(ggplot2)
+model_high <- lm(gni ~ meanschoolyears, data = higher_gni_group)  
+residuals_df <- data.frame(
+    resid = resid(model_high),
+    fitted = fitted(model_high)
+)
+
+ggplot(residuals_df, aes(x = fitted, y = resid)) +
+    geom_point() +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "red") +  
+    labs(x = "Fitted Values", y = "Residuals", title = "Residual vs. Fitted Plot for Higher GNI group") +
+    theme_minimal()
+```
+
+#### Hypothesis Testing
+Normality:
+
+- Box plot: The comparative box plots display symmetrical distribution and absence of significant skewness or outliers. This suggests that the data conforms well to a normal distribution.
+
+- QQ plots: The QQ plots show a straight line, confirming that the data points closely adhere to a normal distribution. 
+
+- Normality Check: As both sample size are both larger than 30, the Central Limit Theorem ensures the sample means are approximately normal. 
+```{r}
+qqnorm(lower_gni_group$meanschoolyears); qqline(lower_gni_group$meanschoolyears)
+qqnorm(higher_gni_group$meanschoolyears); qqline(higher_gni_group$meanschoolyears)
+
+boxplot(lower_gni_group$meanschoolyears, higher_gni_group$meanschoolyears, names=c("Lower GNI", "Higher GNI"), main="Mean School Years Comparative Boxplots")
+
+paste('Sample size of lower GNI group:', sum(complete.cases(lower_gni_group)))
+paste('Sample size of higher GNI group:', sum(complete.cases(higher_gni_group)))
+```
+
+Equal Spread: 
+
+- Variance Test: As p-value is smaller than 0.05, the null hypothesis is rejected, the variances of the groups are not equal. Thus, instead of 2 Sample T-test, Welch Two Sample t-test is used in section 2.3.
+
+  H0: The variances of the groups are equal
+    
+  H1: The variances of the groups are not equal
+
+```{r}
+var.test(lower_gni_group$meanschoolyears, higher_gni_group$meanschoolyears)
+```
+
+### Test Statistic and P-value
+With a t-value of -14.106 and a p-value < 2.2e-16, there is a statistically significant difference between mean school years of lower GNI and higher GNI groups.
+
+### Conclusion
+Statistical conclusion: As p-value < 0.05, the null hypothesis is rejected. There is a difference in the mean years of schooling between the lower GNI group and the higher GNI group
+
+Scientific conclusion: The data suggests that a country’s mean years of school does have an effect on its GNI. 
+
+## Limitations
+- Temporal relevance: Variables like HDI, GNI, and Mean years of schooling were collected in 2021, which may not reflect recent changes, potentially limiting the applicability of this project's findings.
