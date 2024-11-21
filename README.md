@@ -1,1 +1,1 @@
-# global-iq-report
+# global IQ report
